@@ -5,7 +5,54 @@ import os
 import sys
 import winsound
 import math
+import urllib.request
+import urllib.error
 from datetime import datetime
+
+# ---------- 飞书反馈 Webhook ----------
+FEISHU_WEBHOOK = "https://open.feishu.cn/open-apis/bot/v2/hook/214ebe5a-96d1-4bd8-9e2b-6763e1b63d98"
+
+def send_feedback_to_feishu(content, email=""):
+    """通过飞书机器人 Webhook 发送反馈"""
+    try:
+        payload = {
+            "msg_type": "interactive",
+            "card": {
+                "config": {"wide_screen_mode": True},
+                "header": {
+                    "title": {"tag": "plain_text", "content": "DesireBall 用户反馈"},
+                    "template": "blue"
+                },
+                "elements": [
+                    {
+                        "tag": "div",
+                        "text": {
+                            "tag": "lark_md",
+                            "content": content
+                        }
+                    },
+                    {"tag": "hr"},
+                    {
+                        "tag": "note",
+                        "elements": [
+                            {"tag": "plain_text", "content": f"邮箱: {email if email else '未填写'}  |  时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"}
+                        ]
+                    }
+                ]
+            }
+        }
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            FEISHU_WEBHOOK,
+            data=data,
+            headers={"Content-Type": "application/json"}
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            result = json.loads(resp.read().decode("utf-8"))
+            return result.get("code", 0) == 0
+    except Exception as e:
+        print("反馈发送失败:", e)
+        return False
 
 # ---------- 配置持久化 ----------
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
@@ -114,6 +161,8 @@ class DesireBall:
         self.menu.add_command(label="设置频率", command=self.set_interval)
         self.auto_start_var = tk.BooleanVar(value=self.config.get("auto_start", False))
         self.menu.add_checkbutton(label="开机自启", variable=self.auto_start_var, command=self.toggle_auto_start)
+        self.menu.add_separator()
+        self.menu.add_command(label="反馈建议", command=self.open_feedback_dialog)
         self.menu.add_separator()
         self.menu.add_command(label="退出", command=self.quit_app)
 
@@ -381,6 +430,45 @@ class DesireBall:
         self.config["auto_start"] = enable
         save_config(self.config)
         set_auto_start(enable)
+
+    # ---------- 反馈窗口 ----------
+    def open_feedback_dialog(self):
+        dialog = tk.Toplevel(self.ball)
+        dialog.title("反馈建议")
+        dialog.resizable(False, False)
+        dialog.attributes("-topmost", True)
+        dialog.grab_set()
+
+        dw, dh = 340, 280
+        x, y = self.calc_position_relative_to_ball(dw, dh)
+        dialog.geometry(f"{dw}x{dh}+{x}+{y}")
+
+        tk.Label(dialog, text="您的意见或建议", font=("微软雅黑", 10, "bold")).pack(pady=(15,5))
+        text_var = tk.Text(dialog, width=36, height=7, font=("微软雅黑", 9),
+                           wrap="word", relief="solid", bd=1)
+        text_var.pack(padx=15)
+        text_var.focus()
+
+        tk.Label(dialog, text="邮箱（选填，方便我们回复您）", font=("微软雅黑", 8)).pack(pady=(8,2))
+        email_var = tk.StringVar()
+        tk.Entry(dialog, textvariable=email_var, width=36, font=("微软雅黑", 9)).pack()
+
+        def submit_feedback():
+            content = text_var.get("1.0", "end").strip()
+            if not content:
+                messagebox.showwarning("提示", "请填写反馈内容", parent=dialog)
+                return
+            email = email_var.get().strip()
+            success = send_feedback_to_feishu(content, email)
+            if success:
+                messagebox.showinfo("感谢", "反馈已提交，感谢您的建议！", parent=dialog)
+                dialog.destroy()
+            else:
+                messagebox.showerror("错误", "反馈发送失败，请检查网络连接", parent=dialog)
+
+        btn = tk.Button(dialog, text="提交反馈", command=submit_feedback,
+                        bg="#007AFF", fg="white", font=("微软雅黑", 10))
+        btn.pack(pady=12)
 
     def quit_app(self):
         if self.timer_job:
