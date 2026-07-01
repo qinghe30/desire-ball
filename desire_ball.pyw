@@ -5,9 +5,25 @@ import os
 import sys
 import winsound
 import math
+import socket
 import urllib.request
 import urllib.error
 from datetime import datetime
+
+# ---------- 单实例检查 ----------
+def ensure_single_instance():
+    """通过绑定固定端口确保只有一个实例在运行"""
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.bind(('127.0.0.1', 38472))
+        sock.listen(1)
+        return sock
+    except OSError:
+        return None
+
+_single_sock = ensure_single_instance()
+if _single_sock is None:
+    sys.exit(0)
 
 # ---------- 飞书反馈 Webhook ----------
 FEISHU_WEBHOOK = "https://open.feishu.cn/open-apis/bot/v2/hook/214ebe5a-96d1-4bd8-9e2b-6763e1b63d98"
