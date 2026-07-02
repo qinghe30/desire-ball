@@ -35,7 +35,7 @@ python desire_ball.pyw
 
 ### 方式二：下载 exe 运行（无需 Python）
 
-前往 [Releases](https://github.com/你的用户名/desire-ball/releases) 页面下载最新版本的 `DesireBall.exe`，双击直接运行。
+前往 [Releases](https://github.com/qinghe30/desire-ball/releases) 页面下载最新版本的 `DesireBall.exe`，双击直接运行。
 
 ### 方式三：自行打包
 
