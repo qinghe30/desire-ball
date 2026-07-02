@@ -66,8 +66,6 @@ python desire_ball.pyw
 desire_ball/
 ├── desire_ball.pyw   # 主程序
 ├── config.json       # 用户配置（自动生成，不提交）
-├── prd.md            # 产品需求文档（含完整理论说明）
-├── PROJECT_STATUS.md # 项目状态报告
 ├── build.bat         # 打包脚本
 ├── LICENSE           # MIT 许可证
 └── README.md         # 本文件
