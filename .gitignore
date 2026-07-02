@@ -9,6 +9,10 @@ build/
 # Config (用户个人配置不提交)
 config.json
 
+# 项目内部文档（不公开）
+prd.md
+PROJECT_STATUS.md
+
 # IDE
 .vscode/
 .idea/
